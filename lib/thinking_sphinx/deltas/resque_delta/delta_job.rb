@@ -9,6 +9,8 @@ class ThinkingSphinx::Deltas::ResqueDelta::DeltaJob
   # @param [String] index the name of the Sphinx index
   #
   def self.perform(index)
+    ThinkingSphinx::Deltas::ResqueDelta.before_index(index)
     ThinkingSphinx::Deltas::IndexJob.new(index).perform
+    ThinkingSphinx::Deltas::ResqueDelta.after_index(index)
   end
 end

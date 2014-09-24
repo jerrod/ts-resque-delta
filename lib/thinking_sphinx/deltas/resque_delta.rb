@@ -34,6 +34,30 @@ class ThinkingSphinx::Deltas::ResqueDelta < ThinkingSphinx::Deltas::DefaultDelta
     end
   end
 
+  def self.before_index_queue(*args)
+    true
+  end
+
+  def self.before_index(*args)
+    true
+  end
+
+  def self.after_index(*args)
+    true
+  end
+
+  def self.before_flag_as_deleted_queue(*args)
+    true
+  end
+
+  def self.before_flag_as_deleted(*args)
+    true
+  end
+
+  def self.after_flag_as_deleted(*args)
+    true
+  end
+
   module Binary
     # Adds a job to the queue for processing the given model's delta index. A
     # job for hiding the instance in the core index is also created, if an
@@ -52,8 +76,16 @@ class ThinkingSphinx::Deltas::ResqueDelta < ThinkingSphinx::Deltas::DefaultDelta
     def index(model, instance = nil)
       return true if skip? instance
 
+      unless ThinkingSphinx::Deltas::ResqueDelta.before_index_queue(model, instance)
+        return true
+      end
+
       Resque.enqueue ThinkingSphinx::Deltas::ResqueDelta::DeltaJob,
         model.delta_index_names
+
+      unless ThinkingSphinx::Deltas::ResqueDelta.before_flag_as_deleted_queue(model, instance)
+        return true
+      end
 
       Resque.enqueue(
         ThinkingSphinx::Deltas::ResqueDelta::FlagAsDeletedJob,
@@ -80,6 +112,9 @@ class ThinkingSphinx::Deltas::ResqueDelta < ThinkingSphinx::Deltas::DefaultDelta
 
   module SphinxQL
     def delete(index, instance)
+      unless ThinkingSphinx::Deltas::ResqueDelta.before_flag_as_deleted_queue(index, instance)
+        return true
+      end
       Resque.enqueue(
         ThinkingSphinx::Deltas::ResqueDelta::FlagAsDeletedJob,
         index.name, index.document_id_for_key(instance.id)
@@ -87,6 +122,9 @@ class ThinkingSphinx::Deltas::ResqueDelta < ThinkingSphinx::Deltas::DefaultDelta
     end
 
     def index(index)
+      unless ThinkingSphinx::Deltas::ResqueDelta.before_index_queue(index)
+        return true
+      end
       Resque.enqueue ThinkingSphinx::Deltas::ResqueDelta::DeltaJob, index.name
     end
   end
