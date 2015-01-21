@@ -10,7 +10,9 @@ class ThinkingSphinx::Deltas::ResqueDelta::DeltaJob
   #
   def self.perform(index)
     ThinkingSphinx::Deltas::ResqueDelta.before_index(index)
-    ThinkingSphinx::Deltas::IndexJob.new(index).perform
+    unless ThinkingSphinx::Deltas::IndexJob.new(index).perform
+      ThinkingSphinx::Deltas::ResqueDelta.failed_index(index)
+    end
     ThinkingSphinx::Deltas::ResqueDelta.after_index(index)
   end
 end

@@ -58,6 +58,10 @@ class ThinkingSphinx::Deltas::ResqueDelta < ThinkingSphinx::Deltas::DefaultDelta
     true
   end
 
+  def self.failed_index(*args)
+    true
+  end
+
   module Binary
     # Adds a job to the queue for processing the given model's delta index. A
     # job for hiding the instance in the core index is also created, if an
